@@ -2,9 +2,11 @@ from django.shortcuts import get_object_or_404
 from rest_framework import generics
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from categories.models import Category
+from carts.models import CartProduct, Cart
 from users.permissions import SalesmanPermission
 from .models import Product
-from .serializer import ProductSerializer
+from .serializer import ProductSerializer, ProductBuySerializer
+from rest_framework.permissions import IsAuthenticated
 
 
 class ProductView(generics.ListCreateAPIView, generics.RetrieveUpdateDestroyAPIView):
@@ -17,3 +19,38 @@ class ProductView(generics.ListCreateAPIView, generics.RetrieveUpdateDestroyAPIV
         category_id = self.request.data.pop("category")
         category = get_object_or_404(Category, pk=category_id)
         return serializer.save(owner=self.request.user, category=category)
+
+
+class ProductBuyView(generics.CreateAPIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    queryset = CartProduct.objects.all()
+    serializer_class = ProductBuySerializer
+
+    def perform_create(self, serializer):
+        cart = self.request.user.cart
+        product_id = self.kwargs.get("pk")
+        product = get_object_or_404(Product, id=product_id)
+        
+        if "total_itens" in self.request.data:
+            total_itens = self.request.data["total_itens"]
+        else:
+            total_itens = 1
+
+        return serializer.save(
+                cart=cart,
+                product=product,
+                total_itens=total_itens,
+                total_price=total_itens * product.price
+            )
+
+class ProductBuyListView(generics.ListAPIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = ProductBuySerializer
+
+    def get_queryset(self):
+        cart = CartProduct.objects.filter(
+            cart=self.request.user.cart
+        )
+        return cart

@@ -18,5 +18,5 @@ class Product(models.Model):
         "categories.Category",
         on_delete=models.CASCADE,
         related_name="products",
-        null=True
+        null=True,
     )
