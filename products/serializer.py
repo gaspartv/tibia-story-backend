@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from .models import Product
 from carts.models import CartProduct
+from .models import Product
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -20,6 +20,7 @@ class ProductSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["owner"]
 
+
 class ProductBuySerializer(serializers.ModelSerializer):
     class Meta:
         model = CartProduct
@@ -29,5 +30,6 @@ class ProductBuySerializer(serializers.ModelSerializer):
             "total_price",
             "cart",
             "product",
+            "status",
         ]
-        read_only_fields = ["cart", "product"]
+        read_only_fields = ["cart", "product", "status"]

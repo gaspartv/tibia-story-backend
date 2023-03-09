@@ -1,12 +1,14 @@
+from rest_framework.views import APIView, Request, Response, status
 from django.shortcuts import get_object_or_404
 from rest_framework import generics
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
 from categories.models import Category
 from carts.models import CartProduct, Cart
 from users.permissions import SalesmanPermission
 from .models import Product
 from .serializer import ProductSerializer, ProductBuySerializer
-from rest_framework.permissions import IsAuthenticated
+import ipdb
 
 
 class ProductView(generics.ListCreateAPIView, generics.RetrieveUpdateDestroyAPIView):
@@ -31,18 +33,30 @@ class ProductBuyView(generics.CreateAPIView):
         cart = self.request.user.cart
         product_id = self.kwargs.get("pk")
         product = get_object_or_404(Product, id=product_id)
-        
+
         if "total_itens" in self.request.data:
             total_itens = self.request.data["total_itens"]
         else:
             total_itens = 1
 
-        return serializer.save(
+        cart_product = CartProduct.objects.filter(
+            cart=cart,
+            product=product,
+            status=True,
+        ).first()
+        if cart_product:
+            cart_product.total_itens += total_itens
+            cart_product.total_price += total_itens * product.price
+            cart_product.save()
+            return cart_product
+        else:
+            return serializer.save(
                 cart=cart,
                 product=product,
                 total_itens=total_itens,
-                total_price=total_itens * product.price
+                total_price=total_itens * product.price,
             )
+
 
 class ProductBuyListView(generics.ListAPIView):
     authentication_classes = [JWTAuthentication]
@@ -51,6 +65,7 @@ class ProductBuyListView(generics.ListAPIView):
 
     def get_queryset(self):
         cart = CartProduct.objects.filter(
-            cart=self.request.user.cart
+            cart=self.request.user.cart,
+            status=True,
         )
         return cart

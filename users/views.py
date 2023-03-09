@@ -1,9 +1,9 @@
-from .models import User
-from .serializers import UserSerializer
-from carts.models import Cart
 from rest_framework import generics
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from carts.models import Cart
 from .permissions import IsUserPermission
+from .models import User
+from .serializers import UserSerializer
 
 
 class UserView(generics.ListCreateAPIView):

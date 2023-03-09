@@ -6,8 +6,5 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
 
     cart = models.OneToOneField(
-        "carts.Cart",
-        on_delete=models.CASCADE,
-        related_name="cart_user",
-        null=True
+        "carts.Cart", on_delete=models.CASCADE, related_name="cart_user", null=True
     )
